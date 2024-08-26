@@ -86,8 +86,10 @@ def add_content_to_doc(json_file):
       print("No 'gptOutput' found in the JSON file.")
       return
 
+    header_request = add_header_to_doc()
+
     # Convert Markdown to Google Docs requests
-    requests = markdown_to_docs_requests(gpt_output)
+    requests = header_request + markdown_to_docs_requests(gpt_output)
 
     # Execute the request
     result = docs_service.documents().batchUpdate(
@@ -115,7 +117,6 @@ def markdown_to_docs_requests(markdown_text):
     # Convert Markdown to HTML
     html = markdown.markdown(markdown_text)
 
-    print(html)
     # Parse the HTML
     soup = BeautifulSoup(html, 'html.parser')
 
@@ -314,29 +315,6 @@ def markdown_to_docs_requests(markdown_text):
           }
         })
         index += 2
-      # elif element.name == 'strong':
-      #   text = element.get_text()
-      #   requests.append({
-      #     'insertText': {
-      #       'location': {
-      #         'index': index,
-      #       },
-      #       'text': text,
-      #     }
-      #   })
-      #   requests.append({
-      #     'updateTextStyle': {
-      #       'range': {
-      #         'startIndex': index,
-      #         'endIndex': index + len(text)
-      #       },
-      #       'textStyle': {
-      #         'bold': True
-      #       },
-      #       'fields': 'bold'
-      #     }
-      #   })
-      #   index += len(text)
       elif element.name == 'em':
         text = element.get_text()
         requests.append({
@@ -362,6 +340,109 @@ def markdown_to_docs_requests(markdown_text):
         index += len(text)
 
     return requests
+
+def add_header_to_doc():
+  """Adds a header to the document with an image above the text and returns the requests."""
+  docs_service = build("docs", "v1", credentials=creds)
+
+  # Create a header
+  create_header_response = docs_service.documents().batchUpdate(
+    documentId=document_id,
+    body={
+      "requests": [
+        {
+          "createHeader": {
+            "type": "DEFAULT"
+          }
+        }
+      ]
+    }
+  ).execute()
+
+  # Get the header ID
+  header_id = create_header_response['replies'][0]['createHeader']['headerId']
+
+  # Define the header text
+  header_text = "\nABC Acquisition Analysis\n"
+
+  return [
+    # Insert the image into the header
+    {
+      'insertInlineImage': {
+        'location': {
+          'segmentId': header_id,
+          'index': 0,
+        },
+        'uri': 'https://drive.google.com/uc?id=1TgCS1vQE4_4J07cMbuk24TAWYrj8zVto',
+        'objectSize': {
+          'height': {
+            'magnitude': 100,
+            'unit': 'PT'
+          },
+          'width': {
+            'magnitude': 100,
+            'unit': 'PT'
+          }
+        }
+      }
+    },
+    # Center the image in the header
+    {
+      'updateParagraphStyle': {
+        'range': {
+          'segmentId': header_id,
+          'startIndex': 0,
+          'endIndex': 1,  # Just after the image
+        },
+        'paragraphStyle': {
+          'alignment': 'CENTER'
+        },
+        'fields': 'alignment'
+      }
+    },
+    # Insert the header text below the image
+    {
+      'insertText': {
+        'location': {
+          'segmentId': header_id,
+          'index': 1,  # After the image
+        },
+        'text': header_text,
+      }
+    },
+    # Style the header text
+    {
+      'updateTextStyle': {
+        'range': {
+          'segmentId': header_id,
+          'startIndex': 1,
+          'endIndex': 1 + len(header_text),
+        },
+        'textStyle': {
+          'bold': True,
+          'fontSize': {
+            'magnitude': 16,
+            'unit': 'PT'
+          }
+        },
+        'fields': 'bold,fontSize'
+      }
+    },
+    # Center the header text
+    {
+      'updateParagraphStyle': {
+        'range': {
+          'segmentId': header_id,
+          'startIndex': 1,
+          'endIndex': 1 + len(header_text),
+        },
+        'paragraphStyle': {
+          'alignment': 'CENTER'
+        },
+        'fields': 'alignment'
+      }
+    }
+  ]
 
 def main():
   build_creds()
