@@ -9,7 +9,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# If modifying these scopes, delete the file token.json.
+# Scopes for access
 SCOPES = ["https://www.googleapis.com/auth/documents.readonly", "https://www.googleapis.com/auth/drive.file"]
 
 # Folder containing documents
@@ -42,6 +42,7 @@ def build_creds():
     with open("token.json", "w") as token:
       token.write(creds.to_json())
 
+# Creates a new google doc titled "ABC One-Pager" in the specified folder
 def create_google_doc():
   global document_id
 
@@ -68,6 +69,7 @@ def create_google_doc():
   except HttpError as err:
     print(err)
 
+# Adds content from json file to google doc
 def add_content_to_doc(json_file):
   global document_id
 
@@ -102,6 +104,7 @@ def add_content_to_doc(json_file):
   except HttpError as err:
     print(err)
 
+# Converts given markdown into google docs requests
 def markdown_to_docs_requests(markdown_text):
   # Convert Markdown to HTML
   html = markdown.markdown(markdown_text)
@@ -341,6 +344,7 @@ def markdown_to_docs_requests(markdown_text):
 
     return requests
 
+# Creates google doc request for a header with tuck advisor logo
 def add_header_to_doc():
   """Adds a header to the document with an image above the text and returns the requests."""
   docs_service = build("docs", "v1", credentials=creds)
@@ -449,8 +453,6 @@ def main():
   create_google_doc()
   if document_id:
     add_content_to_doc("abc.json")
-
-
 
 if __name__ == "__main__":
   main()
