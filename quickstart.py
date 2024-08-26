@@ -344,9 +344,8 @@ def markdown_to_docs_requests(markdown_text):
 
     return requests
 
-# Creates google doc request for a header with tuck advisor logo
+# Adds a header with the Tuck Advisor logo to the document with an image above the text and returns the requests.
 def add_header_to_doc():
-  """Adds a header to the document with an image above the text and returns the requests."""
   docs_service = build("docs", "v1", credentials=creds)
 
   # Create a header
